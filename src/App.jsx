@@ -7,11 +7,16 @@ import Places from './components/Places.jsx';
 import { AVAILABLE_PLACES } from './data.js';
 import { sortPlacesByDistance } from './loc.js';
 
+const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
+const storedPlaces = storedIds.map((id) =>
+	AVAILABLE_PLACES.find((place) => place.id === id)
+);
+
 function App() {
 	const modal = useRef();
 	const selectedPlace = useRef();
 	const [availablePlaces, setAvailablePlaces] = useState([]);
-	const [pickedPlaces, setPickedPlaces] = useState([]);
+	const [pickedPlaces, setPickedPlaces] = useState(storedPlaces);
 
 	useEffect(() => {
 		// will executes only after APP ocmponent function execution finished
@@ -42,6 +47,15 @@ function App() {
 			const place = AVAILABLE_PLACES.find((place) => place.id === id);
 			return [place, ...prevPickedPlaces];
 		});
+
+		// this is another sideEffect, but here we don't need to use useEffect hook. That's because we should avoid usege of useEffect and only use it when we must prevent infinite loops, or if we have code that can only run after the component function executed at least once
+		const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
+		if (storedIds.indexOf(id) === -1) {
+			localStorage.setItem(
+				'selectedPlaces',
+				JSON.stringify([id, ...storedIds])
+			);
+		}
 	}
 
 	function handleRemovePlace() {
@@ -49,6 +63,11 @@ function App() {
 			prevPickedPlaces.filter((place) => place.id !== selectedPlace.current)
 		);
 		modal.current.close();
+		const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || []; // fetch data from navigators local storage
+		localStorage.setItem(
+			'selectedPlaces',
+			JSON.stringify(storedIds.filter((id) => id !== selectedPlace.current))
+		);
 	}
 
 	return (
